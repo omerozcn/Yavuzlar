@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz - Soruları Cevapla</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="login-container">
+        <h2 id="questionText">Rastgele Soru</h2>
+        <div id="answerOptions"></div>
+        <button class="main-button" id="submitAnswer">Cevabı Gönder</button>
+        <p id="result"></p>
+        <button class="main-button" onclick="window.location.href='admin.html'">Yönetim Paneline Dön</button>
+    </div>
+
+    <script>
+        let questions = JSON.parse(localStorage.getItem('questions')) || [];
+        let currentQuestionIndex = -1;
+
+        function displayRandomQuestion() {
+            if (questions.length > 0) {
+                currentQuestionIndex = Math.floor(Math.random() * questions.length);
+                const question = questions[currentQuestionIndex];
+
+                const questionText = document.getElementById('questionText');
+                const answerOptions = document.getElementById('answerOptions');
+                
+                questionText.innerHTML = question.text;
+
+                answerOptions.innerHTML = `
+                    <label><input type="radio" name="answer" value="A"> A) ${question.answers.A}</label><br>
+                    <label><input type="radio" name="answer" value="B"> B) ${question.answers.B}</label><br>
+                    <label><input type="radio" name="answer" value="C"> C) ${question.answers.C}</label><br>
+                    <label><input type="radio" name="answer" value="D"> D) ${question.answers.D}</label>
+                `;
+
+                document.getElementById('submitAnswer').disabled = false;
+                document.getElementById('result').textContent = '';
+            } else {
+                document.getElementById('questionText').textContent = 'Henüz eklenmiş bir soru yok.';
+                document.getElementById('answerOptions').textContent = '';
+                document.getElementById('submitAnswer').disabled = true;
+            }
+        }
+
+        document.getElementById('submitAnswer').addEventListener('click', function() {
+            const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+            if (selectedAnswer) {
+                const userAnswer = selectedAnswer.value;
+                const correctAnswer = questions[currentQuestionIndex].correctAnswer;
+                
+                const resultMessage = document.getElementById('result');
+                if (userAnswer === correctAnswer) {
+                    resultMessage.textContent = 'Tebrikler, cevabınız doğru!';
+                    resultMessage.style.color = 'green';
+                } else {
+                    resultMessage.textContent = `Maalesef cevabınız yanlış. Doğru cevap: ${correctAnswer}`;
+                    resultMessage.style.color = 'red';
+                }
+
+                document.getElementById('submitAnswer').textContent = 'Yeni Soru';
+            } else {
+                alert("Lütfen bir cevap seçin.");
+            }
+        });
+
+        window.onload = displayRandomQuestion;
+
+        console.log("Sorular:", localStorage.getItem('questions'));
+    </script>
+</body>
+</html>

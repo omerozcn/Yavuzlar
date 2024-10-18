@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soruları Düzenle</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="login-container">
+        <h2>Soruları Düzenle</h2>
+        <ul id="questionList"></ul>
+        <button class="main-button" onclick="window.location.href='admin.html'">Yönetim Paneline Dön</button>
+    </div>
+
+    <script>
+        let questions = JSON.parse(localStorage.getItem('questions')) || [];
+
+        function displayQuestions() {
+            const questionList = document.getElementById('questionList');
+            questionList.innerHTML = '';
+            questions.forEach((question, index) => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <div>
+                        <strong>Soru:</strong> ${question.text} <br>
+                        <strong>Şıklar:</strong> A: ${question.answers.A}, B: ${question.answers.B}, C: ${question.answers.C}, D: ${question.answers.D} <br>
+                        <strong>Doğru Cevap:</strong> Şık ${question.correctAnswer} <br>
+                    </div>
+                    <button onclick="editQuestion(${index})">Düzenle</button>
+                    <button onclick="deleteQuestion(${index})">Sil</button>
+                `;
+                questionList.appendChild(listItem);
+            });
+        }
+
+        function editQuestion(index) {
+            const question = questions[index];
+            const newQuestionText = prompt("Yeni soru metnini girin:", question.text);
+            const newAnswerA = prompt("Yeni Şık A:", question.answers.A);
+            const newAnswerB = prompt("Yeni Şık B:", question.answers.B);
+            const newAnswerC = prompt("Yeni Şık C:", question.answers.C);
+            const newAnswerD = prompt("Yeni Şık D:", question.answers.D);
+            const newCorrectAnswer = prompt("Yeni doğru cevabı (A, B, C, D) girin:", question.correctAnswer);
+
+            if (newQuestionText && newAnswerA && newAnswerB && newAnswerC && newAnswerD && newCorrectAnswer) {
+                questions[index] = {
+                    text: newQuestionText,
+                    answers: {
+                        A: newAnswerA,
+                        B: newAnswerB,
+                        C: newAnswerC,
+                        D: newAnswerD
+                    },
+                    correctAnswer: newCorrectAnswer
+                };
+                localStorage.setItem('questions', JSON.stringify(questions));
+                displayQuestions();
+            }
+        }
+
+        function deleteQuestion(index) {
+            if (confirm("Bu soruyu silmek istediğinize emin misiniz?")) {
+                questions.splice(index, 1);
+                localStorage.setItem('questions', JSON.stringify(questions));
+                displayQuestions();
+            }
+        }
+
+        displayQuestions();
+    </script>
+</body>
+</html>

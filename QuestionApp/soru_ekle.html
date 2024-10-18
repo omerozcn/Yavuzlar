@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soru Ekle</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="login-container">
+        <h2>Soru Ekle</h2>
+        
+        <input type="text" id="questionInput" class="input-bar" placeholder="Soru metnini girin">
+        <div id="answersContainer">
+            <input type="text" class="input-bar" placeholder="Şık A" id="answerA">
+            <input type="text" class="input-bar" placeholder="Şık B" id="answerB">
+            <input type="text" class="input-bar" placeholder="Şık C" id="answerC">
+            <input type="text" class="input-bar" placeholder="Şık D" id="answerD">
+        </div>
+
+        <label for="correctAnswer">Doğru Cevap:</label>
+        <select id="correctAnswer" class="input-bar">
+            <option value="A">Şık A</option>
+            <option value="B">Şık B</option>
+            <option value="C">Şık C</option>
+            <option value="D">Şık D</option>
+        </select>
+
+        <button class="main-button" id="addQuestionButton">Soru Ekle</button>
+        <p id="message"></p>
+        <button class="main-button" onclick="window.location.href='admin.html'">Yönetim Paneline Dön</button>
+    </div>
+
+    <script>
+        let questions = JSON.parse(localStorage.getItem('questions')) || [];
+
+        document.getElementById('addQuestionButton').addEventListener('click', function() {
+            const questionInput = document.getElementById('questionInput').value;
+            const answerA = document.getElementById('answerA').value;
+            const answerB = document.getElementById('answerB').value;
+            const answerC = document.getElementById('answerC').value;
+            const answerD = document.getElementById('answerD').value;
+            const correctAnswer = document.getElementById('correctAnswer').value;
+
+            if (questionInput && answerA && answerB && answerC && answerD && correctAnswer) {
+                const question = {
+                    text: questionInput,
+                    answers: {
+                        A: answerA,
+                        B: answerB,
+                        C: answerC,
+                        D: answerD
+                    },
+                    correctAnswer: correctAnswer
+                };
+                questions.push(question);
+                localStorage.setItem('questions', JSON.stringify(questions));
+                document.getElementById('questionInput').value = '';
+                document.getElementById('answerA').value = '';
+                document.getElementById('answerB').value = '';
+                document.getElementById('answerC').value = '';
+                document.getElementById('answerD').value = '';
+                document.getElementById('correctAnswer').value = 'A';
+                document.getElementById('message').textContent = 'Soru başarıyla eklendi!';
+            } else {
+                document.getElementById('message').textContent = 'Lütfen tüm alanları doldurun!';
+            }
+        });
+    </script>
+</body>
+</html>
